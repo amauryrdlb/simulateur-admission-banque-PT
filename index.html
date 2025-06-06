@@ -118,79 +118,71 @@
 </footer>
 
 <script>
-const aliases = {
-  mathsA: ["math a", "maths a", "mathematiques a"],
-  mathsB: ["math b", "maths b", "mathematiques b"],
-  mathsC: ["math c", "maths c", "mathematiques c"],
-  physiqueA: ["physique a", "phys a"],
-  physiqueB: ["physique b", "phys b"],
-  siA: ["sciences industrielles a", "si a"],
-  siB: ["sciences industrielles b", "si b"],
-  siC: ["sciences industrielles c", "si c"],
-  info: ["informatique", "modelisation", "informatique modelisation", "info"],
-  anglaisA: ["anglais a", "langue vivante a anglais"],
-  anglaisB: ["anglais b", "langue vivante b anglais"],
-  francaisA: ["francais a", "français a"],
-  francaisB: ["francais b", "français b"]
+const mapChamps = {
+  "mathématiques a": "mathsA", "mathématiques b": "mathsB", "mathématiques c": "mathsC",
+  "physique a": "physiqueA", "physique b": "physiqueB",
+  "sciences industrielles a": "siA", "sciences industrielles b": "siB", "sciences industrielles c": "siC",
+  "informatique": "info",
+  "anglais a": "anglaisA", "anglais b": "anglaisB",
+  "français a": "francaisA", "français b": "francaisB"
 };
 
-function normalizeText(text) {
-  return text
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // accents
-    .replace(/[^a-z0-9 ]/g, ' ') // caractères spéciaux
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function detectChamp(normalizedLine) {
-  for (const [champ, list] of Object.entries(aliases)) {
-    for (const alias of list) {
-      if (normalizedLine.includes(alias)) {
-        return champ;
-      }
-    }
-  }
-  return null;
+function normaliserTexte(t) {
+  return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  document.getElementById('ocr-status').textContent = "Lecture en cours...";
 
-  document.getElementById('ocr-status').textContent = "Lecture OCR...";
   const img = document.getElementById('preview-image');
   img.src = URL.createObjectURL(file);
   img.style.display = "block";
 
-  const { data: { text } } = await Tesseract.recognize(file, 'fra', {
+  const { data: { text } } = await Tesseract.recognize(file, 'eng', {
     logger: m => console.log(m)
   });
 
-  document.getElementById('ocr-status').textContent = "OCR terminé.";
-  const summaryTable = document.querySelector('#summary-table tbody');
-  summaryTable.innerHTML = "";
+  document.getElementById('ocr-status').textContent = "Texte extrait.";
+  const lignes = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-  const lignes = text.split('\n');
-  lignes.forEach(ligne => {
-    const normalized = normalizeText(ligne);
-    const match = normalized.match(/(.+?)\s+(\d{1,2}(?:[.,]\d{1,2})?)$/);
-    if (match) {
-      const matiereTxt = match[1];
-      const note = parseFloat(match[2].replace(',', '.'));
+  const notes = [];
+  for (let i = 0; i < lignes.length; i++) {
+    const noteMatch = lignes[i].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
+    if (noteMatch) {
+      const note = parseFloat(noteMatch[1].replace(',', '.'));
+      if (note >= 0 && note <= 20) {
+        // chercher matière juste avant (ou sur la même ligne)
+        let matiere = lignes[i - 1] || lignes[i];
+        matiere = normaliserTexte(matiere);
+        // nettoyer certaines variations OCR
+        matiere = matiere
+          .replace("frangais", "français")
+          .replace("langue vivante a anglais", "anglais a")
+          .replace("langue vivante b anglais", "anglais b")
+          .replace("modélisation", "informatique");
 
-      const champ = detectChamp(matiereTxt);
-      if (champ && !isNaN(note)) {
-        const input = document.querySelector(`[name="${champ}"]`);
-        if (input) input.value = note;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${champ}</td><td>${note}</td>`;
-        summaryTable.appendChild(row);
+        if (mapChamps[matiere]) {
+          notes.push({ champ: mapChamps[matiere], valeur: note });
+        }
       }
     }
+  }
+
+  if (notes.length !== 13) {
+    document.getElementById('ocr-status').textContent = `Erreur : ${notes.length} notes valides détectées. Attendu : 13.`;
+    return;
+  }
+
+  notes.forEach(({ champ, valeur }) => {
+    document.querySelector(`[name="${champ}"]`).value = valeur;
   });
+
+  document.getElementById('ocr-status').textContent = "Champs préremplis avec succès ✅";
 });
+
+
 </script>
 </body>
 </html>
