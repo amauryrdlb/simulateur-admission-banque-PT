@@ -79,13 +79,7 @@
 <body>
 <header>
   <h1>🎓 Simulateur Banque PT</h1>
-  <p>Analyse OCR automatique + Calcul admission Arts & Centrale</p>
-</header>
-<div class="container">
-  <h3>📸 Importer une image de relevé de notes</h3>
-  <input type="file" id="ocr-input" accept="image/*">
-  <p id="ocr-status"></p>
-  <img id="preview-image" src="" style="max-width: 100%; display:none;" />
+  <p> Calcul admission Arts & Centrale</p>
 
   <form id="notesForm">
     <h2>Notes écrites</h2>
@@ -105,108 +99,10 @@
     <button type="submit">Calculer mes chances</button>
   </form>
 
-  <div class="result">
-    <h4>Résumé des notes détectées :</h4>
-    <table id="summary-table">
-      <thead><tr><th>Matière</th><th>Note</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+ 
 <footer>
   🔗 <a href="https://forum.prepas.org/viewforum.php?f=17">Forum Prépa</a> | <a href="https://scei-concours.fr">SCEI</a>
 </footer>
 
-<script>
-const mapChamps = {
-  "mathématiques a": "mathsA",
-  "mathématiques b": "mathsB",
-  "mathématiques c": "mathsC",
-  "physique a": "physiqueA",
-  "physique b": "physiqueB",
-  "sciences industrielles a": "siA",
-  "sciences industrielles b": "siB",
-  "sciences industrielles c": "siC",
-  "informatique": "info",
-  "anglais a": "anglaisA",
-  "anglais b": "anglaisB",
-  "français a": "francaisA",
-  "français b": "francaisB"
-};
-
-function nettoyerTexte(txt) {
-  return txt
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // accents
-    .toLowerCase().trim()
-    .replace(/\s+/g, ' ') // espaces
-    .replace(/frangais/g, 'français') // OCR fixes
-    .replace(/langue vivante a anglais/g, 'anglais a')
-    .replace(/langue vivante b anglais/g, 'anglais b')
-    .replace(/modelisation|modélisation/g, 'informatique');
-}
-
-document.getElementById('ocr-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  document.getElementById('ocr-status').textContent = "Lecture en cours...";
-
-  const img = document.getElementById('preview-image');
-  img.src = URL.createObjectURL(file);
-  img.style.display = "block";
-
-  const { data: { text } } = await Tesseract.recognize(file, 'eng', {
-    logger: m => console.log(m)
-  });
-
-  const lignes = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const notesTrouvees = {};
-  const logDetails = [];
-
-  for (let i = 0; i < lignes.length; i++) {
-    const ligne = nettoyerTexte(lignes[i]);
-
-    for (const matiere in mapChamps) {
-      if (ligne.includes(matiere)) {
-        let noteStr = lignes[i].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
-        if (!noteStr && lignes[i+1]) noteStr = lignes[i+1].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
-
-        if (noteStr) {
-          const note = parseFloat(noteStr[1].replace(',', '.'));
-          if (note >= 0 && note <= 20) {
-            notesTrouvees[mapChamps[matiere]] = note;
-            logDetails.push(`✅ ${matiere} → ${note}`);
-          } else {
-            logDetails.push(`⚠️ ${matiere} détectée mais note invalide : ${noteStr[1]}`);
-          }
-        } else {
-          logDetails.push(`⚠️ ${matiere} détectée mais aucune note trouvée`);
-        }
-      }
-    }
-  }
-
-  const matieresTrouvees = Object.values(mapChamps).filter(champ => champ in notesTrouvees);
-  const matieresManquantes = Object.entries(mapChamps)
-    .filter(([_, champ]) => !(champ in notesTrouvees))
-    .map(([nom]) => nom);
-
-  // Affichage des notes
-  const resultText = `
-🧾 ${matieresTrouvees.length}/13 notes détectées :
-${logDetails.join('\n')}
-
-${matieresManquantes.length > 0 ? `❌ Matières manquantes :\n- ${matieresManquantes.join('\n- ')}` : ''}
-`.trim();
-
-  document.getElementById('ocr-status').textContent = resultText;
-
-  // Remplir les champs reconnus
-  for (const champ in notesTrouvees) {
-    const champInput = document.querySelector(`[name="${champ}"]`);
-    if (champInput) champInput.value = notesTrouvees[champ];
-  }
-});
-</script>
 </body>
 </html>
