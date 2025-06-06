@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Simulateur Banque PT</title>
@@ -58,6 +58,7 @@
     Français B: <input type="number" id="frB" min="0" max="20" step="0.01"><br>
     SI A: <input type="number" id="sia" min="0" max="20" step="0.01"><br>
     SI B: <input type="number" id="sib" min="0" max="20" step="0.01"><br>
+    SI C: <input type="number" id="sic" min="0" max="20" step="0.01"><br>
     <button type="button" onclick="calculerPoints()">Calculer</button>
   </form>
 
@@ -65,7 +66,7 @@
   <div class="result" id="resultCentrale"></div>
 
   <script>
-    const notes = ['mathA', 'mathB', 'mathC', 'physA', 'physB', 'info', 'frA', 'frB', 'sia', 'sib'];
+    const notes = ['mathA', 'mathB', 'mathC', 'physA', 'physB', 'info', 'frA', 'frB', 'sia', 'sib', 'sic'];
 
     const coeffs = {
       arts: {
@@ -73,15 +74,20 @@
         physA: 4, physB: 4,
         info: 4,
         frA: 5, frB: 5,
-        sia: 5, sib: 6
+        sia: 5, sib: 6, sic: 2
       },
       centrale: {
         mathA: 4, mathB: 4, mathC: 4,
         physA: 3, physB: 3,
         info: 3,
         frA: 3, frB: 3,
-        sia: 3, sib: 3
+        sia: 3, sib: 3, sic: 3
       }
+    };
+
+    const barres = {
+      arts: 10.20,
+      centrale: 341.9
     };
 
     function calculerPoints() {
@@ -94,18 +100,19 @@
           totalCoeff += coeffs[ecole][note];
         }
         let moyenne = (total / totalCoeff).toFixed(2);
-        let msg;
+        let barre = barres[ecole];
+        let diff = 0;
+        let estimation = '';
         if (ecole === 'arts') {
-          msg = `<h2>Arts et Métiers</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20`;
+          diff = (barre - moyenne).toFixed(2);
+          estimation = moyenne >= barre ? 'Admissible' : 'Non admissible';
+          document.getElementById('resultArts').innerHTML = `<h2>Arts et Métiers</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20<br>${estimation}<br>Points à gagner : ${diff}`;
         } else {
-          msg = `<h2>Centrale</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20`;
+          diff = (barre - total).toFixed(2);
+          estimation = total >= barre ? 'Admissible' : 'Non admissible';
+          document.getElementById('resultCentrale').innerHTML = `<h2>CentraleSupélec</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20<br>${estimation}<br>Points à gagner : ${diff}`;
         }
-        document.getElementById('result' + capitalize(ecole)).innerHTML = msg;
       });
-    }
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
     }
   </script>
 </body>
