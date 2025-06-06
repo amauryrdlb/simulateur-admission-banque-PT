@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Simulateur Banque PT Arts</title>
+</head>
+<body>
+  <h1>Simulateur Banque PT Arts</h1>
+  <form id="calcForm">
+    Mathématiques A: <input type="number" id="mathA" min="0" max="20" step="0.01"><br>
+    Mathématiques B: <input type="number" id="mathB" min="0" max="20" step="0.01"><br>
+    Mathématiques C: <input type="number" id="mathC" min="0" max="20" step="0.01"><br>
+    Physique A: <input type="number" id="physA" min="0" max="20" step="0.01"><br>
+    Physique B: <input type="number" id="physB" min="0" max="20" step="0.01"><br>
+    Informatique: <input type="number" id="info" min="0" max="20" step="0.01"><br>
+    Français A: <input type="number" id="frA" min="0" max="20" step="0.01"><br>
+    Français B: <input type="number" id="frB" min="0" max="20" step="0.01"><br>
+    Sciences Industrielles A: <input type="number" id="sia" min="0" max="20" step="0.01"><br>
+    Sciences Industrielles B: <input type="number" id="sib" min="0" max="20" step="0.01"><br>
+    <button type="button" onclick="calculerPoints()">Calculer</button>
+  </form>
+  <h2 id="result"></h2>
+
+  <script>
+    const coeffs = {
+      mathA: 4, mathB: 4, mathC: 4,
+      physA: 4, physB: 4,
+      info: 4,
+      frA: 5, frB: 5,
+      sia: 5, sib: 6
+    };
+
+    function calculerPoints() {
+      let totalPoints = 0;
+      let totalCoeff = 0;
+      for (let key in coeffs) {
+        let note = parseFloat(document.getElementById(key).value) || 0;
+        totalPoints += note * coeffs[key];
+        totalCoeff += coeffs[key];
+      }
+      let moyenne = (totalPoints / totalCoeff).toFixed(2);
+      let estimation = '';
+      if (moyenne >= 10.2) {
+        estimation = 'Très bonne chance d\'admission';
+      } else if (moyenne >= 9) {
+        estimation = 'Chances moyennes d\'admission';
+      } else {
+        estimation = 'Chances faibles d\'admission';
+      }
+      document.getElementById('result').textContent = 
+        `Total de points: ${totalPoints.toFixed(2)} - Moyenne: ${moyenne} / 20. ${estimation}.`;
+    }
+  </script>
+</body>
+</html>
