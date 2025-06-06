@@ -77,6 +77,18 @@
   <input type="file" id="ocr-input" accept="image/*">
   <p id="ocr-status"></p>
   <img id="preview-image" src="" style="max-width: 100%; display:none;" />
+  <div id="ocr-summary" style="margin-top: 30px;">
+  <h3>📋 Résumé des notes détectées</h3>
+  <table id="summary-table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th style="text-align: left; padding: 8px;">Matière</th>
+        <th style="text-align: left; padding: 8px;">Note détectée</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
   <form id="notesForm">
     <h2>Notes écrites</h2>
@@ -102,12 +114,21 @@
 </footer>
 <script>
 const mapChamps = {
-  "maths a": "mathsA", "maths b": "mathsB", "maths c": "mathsC",
-  "physique a": "physiqueA", "physique b": "physiqueB",
-  "si a": "siA", "si b": "siB", "si c": "siC",
+  "mathématiques a": "mathsA",
+  "mathématiques b": "mathsB",
+  "mathématiques c": "mathsC",
+  "physique a": "physiqueA",
+  "physique b": "physiqueB",
+  "physique": "physiqueB", // sécurité
+  "sciences industrielles a": "siA",
+  "sciences industrielles b": "siB",
+  "sciences industrielles c": "siC",
   "informatique": "info",
-  "anglais a": "anglaisA", "anglais b": "anglaisB",
-  "français a": "francaisA", "français b": "francaisB"
+  "modélisation": "info",
+  "français a": "francaisA",
+  "français b": "francaisB",
+  "langue vivante a anglais": "anglaisA",
+  "langue vivante b anglais": "anglaisB"
 };
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
@@ -124,19 +145,36 @@ document.getElementById('ocr-input').addEventListener('change', async (e) => {
   });
 
   document.getElementById('ocr-status').textContent = "Texte extrait.";
+  
+  const summaryTable = document.querySelector('#summary-table tbody');
+  summaryTable.innerHTML = ""; // Clear previous results
+
   const lignes = text.split('\n');
   lignes.forEach(ligne => {
-    const match = ligne.toLowerCase().match(/([a-zà-ÿ\s]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/);
+    const match = ligne.toLowerCase().match(/([a-zà-ÿ\s\/\-]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/i);
     if (match) {
       let matiere = match[1].trim().replace(/\s+/g, ' ');
       const note = parseFloat(match[2].replace(',', '.'));
-      const champ = mapChamps[matiere];
-      if (champ && !isNaN(note)) {
-        document.querySelector(`[name="${champ}"]`).value = note;
+
+      for (const [cle, champ] of Object.entries(mapChamps)) {
+        if (matiere.includes(cle) && !isNaN(note)) {
+          const input = document.querySelector(`[name="${champ}"]`);
+          if (input) input.value = note;
+
+          // Résumé : ajouter ligne au tableau
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td style="padding: 8px; border-top: 1px solid #ddd;">${cle}</td>
+            <td style="padding: 8px; border-top: 1px solid #ddd;">${note}</td>
+          `;
+          summaryTable.appendChild(row);
+          break;
+        }
       }
     }
   });
 });
+
 </script>
 </body>
 </html>
