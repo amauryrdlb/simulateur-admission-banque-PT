@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Simulateur Banque PT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
@@ -65,6 +65,15 @@
       background-color: #f1f1f1;
       margin-top: 40px;
     }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border-top: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -77,18 +86,6 @@
   <input type="file" id="ocr-input" accept="image/*">
   <p id="ocr-status"></p>
   <img id="preview-image" src="" style="max-width: 100%; display:none;" />
-  <div id="ocr-summary" style="margin-top: 30px;">
-  <h3>📋 Résumé des notes détectées</h3>
-  <table id="summary-table" style="width: 100%; border-collapse: collapse;">
-    <thead>
-      <tr>
-        <th style="text-align: left; padding: 8px;">Matière</th>
-        <th style="text-align: left; padding: 8px;">Note détectée</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
 
   <form id="notesForm">
     <h2>Notes écrites</h2>
@@ -107,47 +104,61 @@
     <label>Français B : <input type="number" name="francaisB"></label>
     <button type="submit">Calculer mes chances</button>
   </form>
-  <div id="result" class="result"></div>
+
+  <div class="result">
+    <h4>Résumé des notes détectées :</h4>
+    <table id="summary-table">
+      <thead><tr><th>Matière</th><th>Note</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 <footer>
   🔗 <a href="https://forum.prepas.org/viewforum.php?f=17">Forum Prépa</a> | <a href="https://scei-concours.fr">SCEI</a>
 </footer>
+
 <script>
-const mapChamps = {
-  "mathématiques a": "mathsA",
-  "mathématiques b": "mathsB",
-  "mathématiques c": "mathsC",
-  "physique a": "physiqueA",
-  "physique b": "physiqueB",
-  "sciences industrielles a": "siA",
-  "sciences industrielles b": "siB",
-  "sciences industrielles c": "siC",
-  "informatique": "info",
-  "modelisation": "info",
-  "informatique modelisation": "info",
-  "francais a": "francaisA",
-  "francais b": "francaisB",
-  "langue vivante a anglais": "anglaisA",
-  "langue vivante b anglais": "anglaisB",
-  "anglais a": "anglaisA",
-  "anglais b": "anglaisB"
+const aliases = {
+  mathsA: ["math a", "maths a", "mathematiques a"],
+  mathsB: ["math b", "maths b", "mathematiques b"],
+  mathsC: ["math c", "maths c", "mathematiques c"],
+  physiqueA: ["physique a", "phys a"],
+  physiqueB: ["physique b", "phys b"],
+  siA: ["sciences industrielles a", "si a"],
+  siB: ["sciences industrielles b", "si b"],
+  siC: ["sciences industrielles c", "si c"],
+  info: ["informatique", "modelisation", "informatique modelisation", "info"],
+  anglaisA: ["anglais a", "langue vivante a anglais"],
+  anglaisB: ["anglais b", "langue vivante b anglais"],
+  francaisA: ["francais a", "français a"],
+  francaisB: ["francais b", "français b"]
 };
 
-// Fonction utilitaire : normalise la matière pour une recherche robuste
-function normalizeMatiere(text) {
+function normalizeText(text) {
   return text
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // supprime accents
-    .replace(/[\/:]/g, ' ') // remplace séparateurs
-    .replace(/\s+/g, ' ')   // réduit les espaces
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // accents
+    .replace(/[^a-z0-9 ]/g, ' ') // caractères spéciaux
+    .replace(/\s+/g, ' ')
     .trim();
+}
+
+function detectChamp(normalizedLine) {
+  for (const [champ, list] of Object.entries(aliases)) {
+    for (const alias of list) {
+      if (normalizedLine.includes(alias)) {
+        return champ;
+      }
+    }
+  }
+  return null;
 }
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  document.getElementById('ocr-status').textContent = "Lecture en cours...";
 
+  document.getElementById('ocr-status').textContent = "Lecture OCR...";
   const img = document.getElementById('preview-image');
   img.src = URL.createObjectURL(file);
   img.style.display = "block";
@@ -156,37 +167,30 @@ document.getElementById('ocr-input').addEventListener('change', async (e) => {
     logger: m => console.log(m)
   });
 
-  document.getElementById('ocr-status').textContent = "Texte extrait.";
-  
+  document.getElementById('ocr-status').textContent = "OCR terminé.";
   const summaryTable = document.querySelector('#summary-table tbody');
   summaryTable.innerHTML = "";
 
   const lignes = text.split('\n');
   lignes.forEach(ligne => {
-    const match = ligne.match(/([A-Za-zÀ-ÿ\s\/\-]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/);
+    const normalized = normalizeText(ligne);
+    const match = normalized.match(/(.+?)\s+(\d{1,2}(?:[.,]\d{1,2})?)$/);
     if (match) {
-      const rawMatiere = normalizeMatiere(match[1]);
+      const matiereTxt = match[1];
       const note = parseFloat(match[2].replace(',', '.'));
 
-      for (const [cle, champ] of Object.entries(mapChamps)) {
-        if (rawMatiere.includes(cle) && !isNaN(note)) {
-          const input = document.querySelector(`[name="${champ}"]`);
-          if (input) input.value = note;
+      const champ = detectChamp(matiereTxt);
+      if (champ && !isNaN(note)) {
+        const input = document.querySelector(`[name="${champ}"]`);
+        if (input) input.value = note;
 
-          // Ajouter au résumé
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td style="padding: 8px; border-top: 1px solid #ddd;">${cle}</td>
-            <td style="padding: 8px; border-top: 1px solid #ddd;">${note}</td>
-          `;
-          summaryTable.appendChild(row);
-          break;
-        }
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${champ}</td><td>${note}</td>`;
+        summaryTable.appendChild(row);
       }
     }
   });
 });
-
 </script>
 </body>
 </html>
