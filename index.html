@@ -1,108 +1,91 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Simulateur Banque PT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      background-color: #f8f9fa;
-      color: #212529;
-    }
-    header {
-      background-color: #003366;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      margin-top: 20px;
-    }
-    label, input {
-      display: block;
-      margin-top: 10px;
-    }
-    input[type='number'] {
-      width: 100%;
-      padding: 8px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #0055a5;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #004080;
-    }
-    .result {
-      margin-top: 30px;
-      padding: 20px;
-      background-color: #e9f7ef;
-      border-left: 5px solid #28a745;
-      border-radius: 5px;
-    }
-    footer {
-      text-align: center;
-      padding: 20px;
-      background-color: #f1f1f1;
-      margin-top: 40px;
-    }
-    table {
-      width: 100%;
-      margin-top: 10px;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px;
-      border-top: 1px solid #ccc;
-    }
-  </style>
-</head>
-<body>
-<header>
-  <h1>🎓 Simulateur Banque PT</h1>
-  <p> Calcul admission Arts & Centrale</p>
+<script>
+  document.getElementById('notesForm').addEventListener('submit', function (event) {
+    event.preventDefault();
 
-  <form id="notesForm">
-    <h2>Notes écrites</h2>
-    <label>Maths A : <input type="number" name="mathsA"></label>
-    <label>Maths B : <input type="number" name="mathsB"></label>
-    <label>Maths C : <input type="number" name="mathsC"></label>
-    <label>Physique A : <input type="number" name="physiqueA"></label>
-    <label>Physique B : <input type="number" name="physiqueB"></label>
-    <label>SI A : <input type="number" name="siA"></label>
-    <label>SI B : <input type="number" name="siB"></label>
-    <label>SI C : <input type="number" name="siC"></label>
-    <label>Informatique : <input type="number" name="info"></label>
-    <label>Anglais A : <input type="number" name="anglaisA"></label>
-    <label>Anglais B : <input type="number" name="anglaisB"></label>
-    <label>Français A : <input type="number" name="francaisA"></label>
-    <label>Français B : <input type="number" name="francaisB"></label>
-    <button type="submit">Calculer mes chances</button>
-  </form>
+    const notes = Object.fromEntries(new FormData(event.target).entries());
+    Object.keys(notes).forEach(k => (notes[k] = parseFloat(notes[k] || 0)));
 
- 
-<footer>
-  🔗 <a href="https://forum.prepas.org/viewforum.php?f=17">Forum Prépa</a> | <a href="https://scei-concours.fr">SCEI</a>
-</footer>
+    const coeffs = {
+      arts: {
+        mathsA: 0,
+        mathsB: 4,
+        mathsC: 4,
+        physiqueA: 4,
+        physiqueB: 4,
+        si1: 3,
+        si2: 4,
+        si3: 4,
+        info: 4,
+        anga: 0,
+        angb: 4,
+        fra: 5,
+        frb: 5,
+        totalOral: 33,
+      },
+      centrale: {
+        mathsA: 8,
+        mathsB: 8,
+        mathsC: 8,
+        physiqueA: 8,
+        physiqueB: 8,
+        si1: 16,
+        si2: 6,
+        si3: 0,
+        info: 10,
+        anga: 11,
+        angb: 0,
+        fra: 0,
+        frb: 17,
+        totalOral: 100,
+      },
+    };
 
-</body>
-</html>
+    const barres = {
+      arts: 800,
+      centrale: 3200,
+    };
+
+    function messageMotivation(moyenne) {
+      if (moyenne <= 0) return "🥳 GG c’est fait, tu peux dormir tranquille";
+      if (moyenne <= 5) return "🔥 On se relâche pas, c’est bien parti";
+      if (moyenne <= 10) return "💪 Donne tout, on y croit !";
+      if (moyenne <= 15) return "🤞 Courage, oublie pas que sur un malentendu ça peut passer";
+      return "😬 Désolé, il faudrait un miracle...";
+    }
+
+    function calculerPoints(notes, coeffs, barre, nomEcole) {
+      let total = 0;
+      for (const matiere in coeffs) {
+        if (matiere !== 'totalOral') {
+          total += (notes[matiere] || 0) * coeffs[matiere];
+        }
+      }
+
+      let message = `<h3>${nomEcole}</h3>`;
+      message += `Total points écrits : <strong>${total.toFixed(2)}</strong> / ${barre} <br>`;
+
+      const restants = barre - total;
+
+      if (restants <= 0) {
+        message += `<strong>🎉 Félicitations ! Tu as déjà le seuil d'admission à l'écrit pour ${nomEcole}.</strong><br>`;
+        message += `💬 <em>${messageMotivation(0)}</em>`;
+      } else {
+        const moyenneOrale = restants / coeffs.totalOral;
+
+        message += `Points à gagner aux oraux : ${restants.toFixed(2)}<br>`;
+        message += `Moyenne orale nécessaire : <strong>${moyenneOrale.toFixed(2)} / 20</strong><br>`;
+        message += `💬 <em>${messageMotivation(moyenneOrale)}</em>`;
+      }
+
+      return message;
+    }
+
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = ''; // clear before showing
+
+    const resultArts = calculerPoints(notes, coeffs.arts, barres.arts, 'Arts et Métiers');
+    const resultCentrale = calculerPoints(notes, coeffs.centrale, barres.centrale, 'CentraleSupélec');
+
+    resultDiv.innerHTML += resultArts + '<hr>' + resultCentrale;
+  });
+</script>
