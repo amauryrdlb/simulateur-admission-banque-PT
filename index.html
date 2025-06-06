@@ -2,118 +2,85 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulateur Banque PT</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-    }
-    h1, h2 {
-      text-align: center;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0;
-      box-sizing: border-box;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      width: 100%;
-    }
-    .result {
-      background: white;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f2f2f2; color: #333; }
+    h1 { color: #444; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label, select, input { display: block; margin-top: 10px; }
+    input[type='number'] { width: 80px; padding: 5px; }
+    .result { margin-top: 20px; font-weight: bold; background-color: #e0ffe0; padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
-  <h1>Simulateur Banque PT</h1>
-  <form id="calcForm">
-    <h2>Notes (sur 20)</h2>
-    Math A: <input type="number" id="mathA" min="0" max="20" step="0.01"><br>
-    Math B: <input type="number" id="mathB" min="0" max="20" step="0.01"><br>
-    Math C: <input type="number" id="mathC" min="0" max="20" step="0.01"><br>
-    Physique A: <input type="number" id="physA" min="0" max="20" step="0.01"><br>
-    Physique B: <input type="number" id="physB" min="0" max="20" step="0.01"><br>
-    Informatique: <input type="number" id="info" min="0" max="20" step="0.01"><br>
-    Français A: <input type="number" id="frA" min="0" max="20" step="0.01"><br>
-    Français B: <input type="number" id="frB" min="0" max="20" step="0.01"><br>
-    SI A: <input type="number" id="sia" min="0" max="20" step="0.01"><br>
-    SI B: <input type="number" id="sib" min="0" max="20" step="0.01"><br>
-    SI C: <input type="number" id="sic" min="0" max="20" step="0.01"><br>
-    <button type="button" onclick="calculerPoints()">Calculer</button>
-  </form>
+  <div class="container">
+    <h1>Simulateur Banque PT – Arts & CentraleSupélec</h1>
+    <form id="notesForm">
+      <h2>Entrez vos notes écrites :</h2>
+      <label>Maths :</label><input type="number" name="maths" min="0" max="20" step="0.01">
+      <label>Physique :</label><input type="number" name="physique" min="0" max="20" step="0.01">
+      <label>Français :</label><input type="number" name="francais" min="0" max="20" step="0.01">
+      <label>Anglais :</label><input type="number" name="anglais" min="0" max="20" step="0.01">
+      <label>Sciences Industrielles (SI) :</label><input type="number" name="si" min="0" max="20" step="0.01">
+      <label>Sciences Industrielles C (SI C) :</label><input type="number" name="sic" min="0" max="20" step="0.01">
+      <button type="submit">Calculer</button>
+    </form>
 
-  <div class="result" id="resultArts"></div>
-  <div class="result" id="resultCentrale"></div>
+    <div class="result" id="result"></div>
+  </div>
 
   <script>
-    const notes = ['mathA', 'mathB', 'mathC', 'physA', 'physB', 'info', 'frA', 'frB', 'sia', 'sib', 'sic'];
+    document.getElementById('notesForm').addEventListener('submit', function(event) {
+      event.preventDefault();
 
-    const coeffs = {
-      arts: {
-        mathA: 4, mathB: 4, mathC: 4,
-        physA: 4, physB: 4,
-        info: 4,
-        frA: 5, frB: 5,
-        sia: 5, sib: 6, sic: 2
-      },
-      centrale: {
-        mathA: 4, mathB: 4, mathC: 4,
-        physA: 3, physB: 3,
-        info: 3,
-        frA: 3, frB: 3,
-        sia: 3, sib: 3, sic: 3
-      }
-    };
+      const notes = {
+        maths: parseFloat(event.target.maths.value),
+        physique: parseFloat(event.target.physique.value),
+        francais: parseFloat(event.target.francais.value),
+        anglais: parseFloat(event.target.anglais.value),
+        si: parseFloat(event.target.si.value),
+        sic: parseFloat(event.target.sic.value)
+      };
 
-    const barres = {
-      arts: 10.20,
-      centrale: 341.9
-    };
+      const coeffs = {
+        arts: { maths: 5, physique: 4, francais: 2, anglais: 2, si: 4, sic: 2, oraux: 20 },
+        centrale: { maths: 6, physique: 5, francais: 1, anglais: 1, si: 5, sic: 2, oraux: 19 }
+      };
 
-    function calculerPoints() {
-      ['arts', 'centrale'].forEach(ecole => {
-        let total = 0;
-        let totalCoeff = 0;
-        for (let note of notes) {
-          let val = parseFloat(document.getElementById(note).value) || 0;
-          total += val * coeffs[ecole][note];
-          totalCoeff += coeffs[ecole][note];
-        }
-        let moyenne = (total / totalCoeff).toFixed(2);
-        let barre = barres[ecole];
-        let diff = 0;
-        let estimation = '';
-        if (ecole === 'arts') {
-          diff = (barre - moyenne).toFixed(2);
-          estimation = moyenne >= barre ? 'Admissible' : 'Non admissible';
-          document.getElementById('resultArts').innerHTML = `<h2>Arts et Métiers</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20<br>${estimation}<br>Points à gagner : ${diff}`;
+      const barres = {
+        arts: 526, // Point d'admission Arts 2024
+        centrale: 341.9 // Point d'admission CentraleSupélec 2024
+      };
+
+      const calculPoints = (notes, coeffs, barre, nomEcole) => {
+        const totalEcrit = notes.maths * coeffs.maths + notes.physique * coeffs.physique +
+                           notes.francais * coeffs.francais + notes.anglais * coeffs.anglais +
+                           notes.si * coeffs.si + notes.sic * coeffs.sic;
+
+        let message = `<h3>${nomEcole}</h3>`;
+        message += `Total points écrits : ${totalEcrit.toFixed(2)} / ${barre} <br>`;
+
+        const pointsRestants = barre - totalEcrit;
+
+        if (pointsRestants <= 0) {
+          message += `<strong>🎉 Félicitations, vous avez atteint le seuil d'admission à l'écrit pour ${nomEcole} !</strong>`;
         } else {
-          diff = (barre - total).toFixed(2);
-          estimation = total >= barre ? 'Admissible' : 'Non admissible';
-          document.getElementById('resultCentrale').innerHTML = `<h2>CentraleSupélec</h2>Total points : ${total.toFixed(2)}<br>Moyenne : ${moyenne} / 20<br>${estimation}<br>Points à gagner : ${diff}`;
+          const moyenneOrale = pointsRestants / coeffs.oraux;
+          message += `Points à gagner aux oraux : ${pointsRestants.toFixed(2)} / ${coeffs.oraux * 20} <br>`;
+          message += `Moyenne minimale à obtenir aux oraux : ${moyenneOrale.toFixed(2)} / 20`;
         }
-      });
-    }
+
+        return message;
+      };
+
+      const resultHTML =
+        calculPoints(notes, coeffs.arts, barres.arts, "Arts et Métiers") +
+        "<hr>" +
+        calculPoints(notes, coeffs.centrale, barres.centrale, "CentraleSupélec");
+
+      document.getElementById('result').innerHTML = resultHTML;
+    });
   </script>
 </body>
 </html>
