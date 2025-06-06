@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulateur Banque PT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -23,34 +23,35 @@
       margin: 0 0 10px;
     }
     .container {
-      max-width: 800px;
+      max-width: 95%;
       margin: auto;
-      padding: 30px 20px;
+      padding: 20px;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      margin-top: 30px;
+      margin-top: 20px;
     }
     label, input {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
     }
-    input[type='number'] {
+    input[type='number'], input[type='file'] {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       font-size: 16px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
     button {
       margin-top: 20px;
-      padding: 10px 20px;
+      padding: 12px;
       font-size: 16px;
       background-color: #0055a5;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      width: 100%;
     }
     button:hover {
       background-color: #004080;
@@ -76,13 +77,10 @@
     footer a:hover {
       text-decoration: underline;
     }
-    .ocr-section {
-      max-width: 800px;
-      margin: 30px auto;
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    #preview-image {
+      max-width: 100%;
+      display: none;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -92,34 +90,31 @@
     <p>Évalue tes chances aux concours Arts & Métiers et CentraleSupélec</p>
   </header>
 
-  <!-- OCR SECTION -->
-  <div class="ocr-section">
-    <h3>📸 Importer mes résultats (image)</h3>
-    <input type="file" id="ocr-input" accept="image/*" />
-    <br><br>
-    <img id="preview-image" src="" alt="Aperçu" style="max-width: 300px; display:none;" />
-    <p id="ocr-status"></p>
-  </div>
-
-  <!-- FORMULAIRE DE NOTES -->
   <div class="container">
+    <h3>Importer mes résultats (photo ou scan)</h3>
+    <input type="file" id="ocr-input" accept="image/*">
+    <img id="preview-image" alt="Aperçu image">
+    <p id="ocr-status"></p>
+
     <form id="notesForm">
       <h2>Notes écrites</h2>
       <label>Maths A :</label><input type="number" name="maths1" min="0" max="20" step="0.01">
       <label>Maths B :</label><input type="number" name="maths2" min="0" max="20" step="0.01">
       <label>Maths C :</label><input type="number" name="physique1" min="0" max="20" step="0.01">
       <label>Physique A :</label><input type="number" name="physique2" min="0" max="20" step="0.01">
-      <label>Physique B:</label><input type="number" name="francais" min="0" max="20" step="0.01">
+      <label>Physique B :</label><input type="number" name="francais" min="0" max="20" step="0.01">
       <label>Sciences Industrielles A :</label><input type="number" name="anglais" min="0" max="20" step="0.01">
       <label>Sciences Industrielles B :</label><input type="number" name="si1" min="0" max="20" step="0.01">
       <label>Sciences Industrielles C :</label><input type="number" name="si2" min="0" max="20" step="0.01">
       <label>Informatique :</label><input type="number" name="info" min="0" max="20" step="0.01">
-      <label>Angalais A :</label><input type="number" name="model" min="0" max="20" step="0.01">
-      <label>Angalais B :</label><input type="number" name="sic" min="0" max="20" step="0.01">
-      <label>Francais A :</label><input type="number" name="tipe" min="0" max="20" step="0.01">
-      <label>Francais B:</label><input type="number" name="entretien" min="0" max="20" step="0.01">
+      <label>Anglais A :</label><input type="number" name="model" min="0" max="20" step="0.01">
+      <label>Anglais B :</label><input type="number" name="sic" min="0" max="20" step="0.01">
+      <label>Français A :</label><input type="number" name="tipe" min="0" max="20" step="0.01">
+      <label>Français B :</label><input type="number" name="entretien" min="0" max="20" step="0.01">
+
       <button type="submit">Calculer mes chances</button>
     </form>
+
     <div class="result" id="result"></div>
   </div>
 
@@ -131,73 +126,6 @@
     </p>
   </footer>
 
-  <!-- SCRIPT OCR -->
-  <script>
-    document.getElementById('ocr-input').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-
-      reader.onload = function () {
-        const img = document.getElementById('preview-image');
-        img.src = reader.result;
-        img.style.display = 'block';
-
-        document.getElementById('ocr-status').innerText = "📖 Lecture de l'image en cours...";
-
-        Tesseract.recognize(
-          reader.result,
-          'fra',
-          {
-            logger: m => {
-              if (m.status === 'recognizing text') {
-                document.getElementById('ocr-status').innerText = `Progression : ${Math.round(m.progress * 100)}%`;
-              }
-            }
-          }
-        ).then(({ data: { text } }) => {
-          document.getElementById('ocr-status').innerText = "✅ Texte détecté.";
-          remplirChamps(text);
-        });
-      };
-
-      reader.readAsDataURL(file);
-    });
-
-    function remplirChamps(text) {
-      const correspondance = {
-        "maths a": "maths1",
-        "maths b": "maths2",
-        "maths c": "physique1",
-        "physique a": "physique2",
-        "physique b": "francais",
-        "sciences industrielles a": "anglais",
-        "sciences industrielles b": "si1",
-        "sciences industrielles c": "si2",
-        "informatique": "info",
-        "angalais a": "model",
-        "angalais b": "sic",
-        "francais a": "tipe",
-        "francais b": "entretien"
-      };
-
-      const lignes = text.toLowerCase().split('\n');
-      lignes.forEach(ligne => {
-        for (let cle in correspondance) {
-          if (ligne.includes(cle)) {
-            const note = ligne.match(/(\d{1,2}([.,]\d+)?)/);
-            if (note) {
-              const valeur = parseFloat(note[1].replace(',', '.'));
-              document.querySelector(`input[name="${correspondance[cle]}"]`).value = valeur;
-            }
-          }
-        }
-      });
-    }
-  </script>
-
-  <!-- SCRIPT DE CALCUL (inchangé) -->
   <script>
     document.getElementById('notesForm').addEventListener('submit', function(event) {
       event.preventDefault();
@@ -207,15 +135,15 @@
 
       const coeffs = {
         arts: {
-          mathsA: 0, mathsB: 4, mathsC: 4, physiqueA: 4,
-          physiqueB: 4, si1: 3, si2: 4, si3: 4,
-          info: 4, anga: 0, angb: 4, fra: 5, frb: 5,
+          maths1: 4, maths2: 4, physique1: 4, physique2: 4,
+          francais: 4, anglais: 3, si1: 4, si2: 4, info: 4,
+          model: 4, sic: 4, tipe: 5, entretien: 5,
           totalOral: 40
         },
         centrale: {
-          mathsA: 8, mathsB: 8, mathsC: 8, physiqueA: 8,
-          physiqueB: 8, si1: 16, si2: 6, si3: 0,
-          info: 10, anga: 11, angb: 0, fra: 0, frb: 17,
+          maths1: 8, maths2: 8, physique1: 8, physique2: 8,
+          francais: 8, anglais: 6, si1: 16, si2: 6, info: 10,
+          model: 11, sic: 4, tipe: 0, entretien: 17,
           totalOral: 100
         }
       };
@@ -253,6 +181,54 @@
         calculerPoints(notes, coeffs.centrale, barres.centrale, "CentraleSupélec");
 
       document.getElementById('result').innerHTML = resultHTML;
+    });
+
+    // OCR automatisé
+    const ocrToFieldMap = {
+      "maths a": "maths1",
+      "maths b": "maths2",
+      "maths c": "physique1",
+      "physique a": "physique2",
+      "physique b": "francais",
+      "sciences industrielles a": "anglais",
+      "sciences industrielles b": "si1",
+      "sciences industrielles c": "si2",
+      "informatique": "info",
+      "anglais a": "model",
+      "anglais b": "sic",
+      "français a": "tipe",
+      "français b": "entretien"
+    };
+
+    document.getElementById("ocr-input").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const preview = document.getElementById("preview-image");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+      document.getElementById("ocr-status").textContent = "🔍 Analyse OCR en cours...";
+
+      const { data: { text } } = await Tesseract.recognize(file, "fra", {
+        logger: m => document.getElementById("ocr-status").textContent = `🔄 ${m.status} (${Math.round(m.progress * 100)}%)`
+      });
+
+      const lignes = text.toLowerCase().split("\n").map(l => l.trim()).filter(Boolean);
+      lignes.forEach(ligne => {
+        const match = ligne.match(/(.+?)[:\-]?\s*([\d.,]+)/);
+        if (match) {
+          const matiere = match[1].toLowerCase().trim();
+          const note = parseFloat(match[2].replace(',', '.'));
+          const champName = ocrToFieldMap[matiere];
+          if (champName && !isNaN(note)) {
+            const input = document.querySelector(`input[name='${champName}']`);
+            if (input) input.value = note;
+          }
+        }
+      });
+
+      document.getElementById("ocr-status").textContent = "✅ Champs automatiquement remplis.";
     });
   </script>
 </body>
