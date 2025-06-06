@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulateur Banque PT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -22,15 +22,15 @@
     .container {
       max-width: 800px;
       margin: auto;
-      padding: 30px 20px;
+      padding: 20px;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      margin-top: 30px;
+      margin-top: 20px;
     }
     label, input {
       display: block;
-      margin-top: 15px;
+      margin-top: 10px;
     }
     input[type='number'] {
       width: 100%;
@@ -65,99 +65,78 @@
       background-color: #f1f1f1;
       margin-top: 40px;
     }
-    footer a {
-      margin: 0 10px;
-      color: #0055a5;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🎓 Simulateur Banque PT</h1>
-    <p>Évalue tes chances aux concours Arts & Métiers et CentraleSupélec</p>
-  </header>
+<header>
+  <h1>🎓 Simulateur Banque PT</h1>
+  <p>Analyse OCR automatique + Calcul admission Arts & Centrale</p>
+</header>
+<div class="container">
+  <h3>📸 Importer une image de relevé de notes</h3>
+  <input type="file" id="ocr-input" accept="image/*">
+  <p id="ocr-status"></p>
+  <img id="preview-image" src="" style="max-width: 100%; display:none;" />
 
-  <div class="container">
-    <h3>Importer mes résultats (image)</h3>
-    <input type="file" id="ocr-input" accept="image/*" />
-    <br><br>
-    <img id="preview-image" src="" alt="Aperçu" style="max-width: 300px; display:none;" />
-    <p id="ocr-status"></p>
+  <form id="notesForm">
+    <h2>Notes écrites</h2>
+    <label>Maths A : <input type="number" name="mathsA"></label>
+    <label>Maths B : <input type="number" name="mathsB"></label>
+    <label>Maths C : <input type="number" name="mathsC"></label>
+    <label>Physique A : <input type="number" name="physiqueA"></label>
+    <label>Physique B : <input type="number" name="physiqueB"></label>
+    <label>SI A : <input type="number" name="siA"></label>
+    <label>SI B : <input type="number" name="siB"></label>
+    <label>SI C : <input type="number" name="siC"></label>
+    <label>Informatique : <input type="number" name="info"></label>
+    <label>Anglais A : <input type="number" name="anglaisA"></label>
+    <label>Anglais B : <input type="number" name="anglaisB"></label>
+    <label>Français A : <input type="number" name="francaisA"></label>
+    <label>Français B : <input type="number" name="francaisB"></label>
+    <button type="submit">Calculer mes chances</button>
+  </form>
+  <div id="result" class="result"></div>
+</div>
+<footer>
+  🔗 <a href="https://forum.prepas.org/viewforum.php?f=17">Forum Prépa</a> | <a href="https://scei-concours.fr">SCEI</a>
+</footer>
+<script>
+const mapChamps = {
+  "maths a": "mathsA", "maths b": "mathsB", "maths c": "mathsC",
+  "physique a": "physiqueA", "physique b": "physiqueB",
+  "si a": "siA", "si b": "siB", "si c": "siC",
+  "informatique": "info",
+  "anglais a": "anglaisA", "anglais b": "anglaisB",
+  "français a": "francaisA", "français b": "francaisB"
+};
 
-    <form id="notesForm">
-      <h2>Notes écrites</h2>
-      <label>Maths A :</label><input type="number" name="maths1" id="maths1" min="0" max="20" step="0.01">
-      <label>Maths B :</label><input type="number" name="maths2" id="maths2" min="0" max="20" step="0.01">
-      <label>Maths C :</label><input type="number" name="maths3" id="maths3" min="0" max="20" step="0.01">
-      <label>Physique A :</label><input type="number" name="physique1" id="physique1" min="0" max="20" step="0.01">
-      <label>Physique B:</label><input type="number" name="physique2" id="physique2" min="0" max="20" step="0.01">
-      <label>SI A :</label><input type="number" name="si1" id="si1" min="0" max="20" step="0.01">
-      <label>SI B :</label><input type="number" name="si2" id="si2" min="0" max="20" step="0.01">
-      <label>SI C :</label><input type="number" name="si3" id="si3" min="0" max="20" step="0.01">
-      <label>Informatique :</label><input type="number" name="info" id="info" min="0" max="20" step="0.01">
-      <label>Anglais A :</label><input type="number" name="anglais1" id="anglais1" min="0" max="20" step="0.01">
-      <label>Anglais B :</label><input type="number" name="anglais2" id="anglais2" min="0" max="20" step="0.01">
-      <label>Français A :</label><input type="number" name="francais1" id="francais1" min="0" max="20" step="0.01">
-      <label>Français B:</label><input type="number" name="francais2" id="francais2" min="0" max="20" step="0.01">
+document.getElementById('ocr-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('ocr-status').textContent = "Lecture en cours...";
 
-      <button type="submit">Calculer mes chances</button>
-    </form>
+  const img = document.getElementById('preview-image');
+  img.src = URL.createObjectURL(file);
+  img.style.display = "block";
 
-    <div class="result" id="result"></div>
-  </div>
+  const { data: { text } } = await Tesseract.recognize(file, 'fra', {
+    logger: m => console.log(m)
+  });
 
-  <footer>
-    <p>🔗 Liens utiles :
-      <a href="https://forum.prepas.org/viewforum.php?f=17" target="_blank">Forum PT</a> |
-      <a href="https://www.scei-concours.fr" target="_blank">Site SCEI</a> |
-      <a href="https://oldccp.scei-concours.fr/cpge/statistique/2024/pt.php" target="_blank">Statistiques 2024</a>
-    </p>
-  </footer>
-
-  <script>
-    document.getElementById('ocr-input').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      const img = document.getElementById('preview-image');
-      const status = document.getElementById('ocr-status');
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          img.src = reader.result;
-          img.style.display = 'block';
-
-          Tesseract.recognize(reader.result, 'fra', { logger: m => status.textContent = `📖 Lecture OCR : ${Math.round(m.progress * 100)}%` })
-            .then(({ data: { text } }) => {
-              status.textContent = '✅ OCR terminé';
-              const notesMap = {
-                maths1: /maths\s*A\s*:\s*(\d+[.,]?\d*)/i,
-                maths2: /maths\s*B\s*:\s*(\d+[.,]?\d*)/i,
-                maths3: /maths\s*C\s*:\s*(\d+[.,]?\d*)/i,
-                physique1: /physique\s*A\s*:\s*(\d+[.,]?\d*)/i,
-                physique2: /physique\s*B\s*:\s*(\d+[.,]?\d*)/i,
-                si1: /SI\s*A\s*:\s*(\d+[.,]?\d*)/i,
-                si2: /SI\s*B\s*:\s*(\d+[.,]?\d*)/i,
-                si3: /SI\s*C\s*:\s*(\d+[.,]?\d*)/i,
-                info: /info.*:\s*(\d+[.,]?\d*)/i,
-                anglais1: /anglais\s*A\s*:\s*(\d+[.,]?\d*)/i,
-                anglais2: /anglais\s*B\s*:\s*(\d+[.,]?\d*)/i,
-                francais1: /fran[çc]ais\s*A\s*:\s*(\d+[.,]?\d*)/i,
-                francais2: /fran[çc]ais\s*B\s*:\s*(\d+[.,]?\d*)/i,
-              };
-              for (let key in notesMap) {
-                const match = text.match(notesMap[key]);
-                if (match) {
-                  document.getElementById(key).value = match[1].replace(',', '.');
-                }
-              }
-            });
-        };
-        reader.readAsDataURL(file);
+  document.getElementById('ocr-status').textContent = "Texte extrait.";
+  const lignes = text.split('\n');
+  lignes.forEach(ligne => {
+    const match = ligne.toLowerCase().match(/([a-zà-ÿ\s]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/);
+    if (match) {
+      let matiere = match[1].trim().replace(/\s+/g, ' ');
+      const note = parseFloat(match[2].replace(',', '.'));
+      const champ = mapChamps[matiere];
+      if (champ && !isNaN(note)) {
+        document.querySelector(`[name="${champ}"]`).value = note;
       }
-    });
-  </script>
+    }
+  });
+});
+</script>
 </body>
 </html>
