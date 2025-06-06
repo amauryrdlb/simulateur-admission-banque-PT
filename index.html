@@ -119,17 +119,29 @@ const mapChamps = {
   "mathématiques c": "mathsC",
   "physique a": "physiqueA",
   "physique b": "physiqueB",
-  "physique": "physiqueB", // sécurité
   "sciences industrielles a": "siA",
   "sciences industrielles b": "siB",
   "sciences industrielles c": "siC",
   "informatique": "info",
-  "modélisation": "info",
-  "français a": "francaisA",
-  "français b": "francaisB",
+  "modelisation": "info",
+  "informatique modelisation": "info",
+  "francais a": "francaisA",
+  "francais b": "francaisB",
   "langue vivante a anglais": "anglaisA",
-  "langue vivante b anglais": "anglaisB"
+  "langue vivante b anglais": "anglaisB",
+  "anglais a": "anglaisA",
+  "anglais b": "anglaisB"
 };
+
+// Fonction utilitaire : normalise la matière pour une recherche robuste
+function normalizeMatiere(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // supprime accents
+    .replace(/[\/:]/g, ' ') // remplace séparateurs
+    .replace(/\s+/g, ' ')   // réduit les espaces
+    .trim();
+}
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
@@ -147,21 +159,21 @@ document.getElementById('ocr-input').addEventListener('change', async (e) => {
   document.getElementById('ocr-status').textContent = "Texte extrait.";
   
   const summaryTable = document.querySelector('#summary-table tbody');
-  summaryTable.innerHTML = ""; // Clear previous results
+  summaryTable.innerHTML = "";
 
   const lignes = text.split('\n');
   lignes.forEach(ligne => {
-    const match = ligne.toLowerCase().match(/([a-zà-ÿ\s\/\-]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/i);
+    const match = ligne.match(/([A-Za-zÀ-ÿ\s\/\-]+)[\s:]+(\d{1,2}(?:[.,]\d{1,2})?)/);
     if (match) {
-      let matiere = match[1].trim().replace(/\s+/g, ' ');
+      const rawMatiere = normalizeMatiere(match[1]);
       const note = parseFloat(match[2].replace(',', '.'));
 
       for (const [cle, champ] of Object.entries(mapChamps)) {
-        if (matiere.includes(cle) && !isNaN(note)) {
+        if (rawMatiere.includes(cle) && !isNaN(note)) {
           const input = document.querySelector(`[name="${champ}"]`);
           if (input) input.value = note;
 
-          // Résumé : ajouter ligne au tableau
+          // Ajouter au résumé
           const row = document.createElement("tr");
           row.innerHTML = `
             <td style="padding: 8px; border-top: 1px solid #ddd;">${cle}</td>
