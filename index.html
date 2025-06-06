@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulateur Banque PT</title>
@@ -82,6 +83,15 @@
     <h1>🎓 Simulateur Banque PT</h1>
     <p>Évalue tes chances aux concours Arts & Métiers et CentraleSupélec</p>
   </header>
+<div class="ocr-section">
+  <h3>Importer mes résultats (image)</h3>
+  <input type="file" id="ocr-input" accept="image/*" />
+  <br><br>
+  <img id="preview-image" src="" alt="Aperçu" style="max-width: 300px; display:none;" />
+  <p id="ocr-status"></p>
+</div>
+
+
 
   <div class="container">
     <form id="notesForm">
