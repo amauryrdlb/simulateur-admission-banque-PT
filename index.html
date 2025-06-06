@@ -136,13 +136,13 @@ const mapChamps = {
 
 function nettoyerTexte(txt) {
   return txt
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // retire les accents
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // accents
     .toLowerCase().trim()
-    .replace(/\s+/g, ' ') // normalise les espaces
-    .replace(/frangais/g, 'français') // correction OCR fréquente
+    .replace(/\s+/g, ' ') // espaces
+    .replace(/frangais/g, 'français') // OCR fixes
     .replace(/langue vivante a anglais/g, 'anglais a')
     .replace(/langue vivante b anglais/g, 'anglais b')
-    .replace(/modélisation|modelisation/g, 'informatique');
+    .replace(/modelisation|modélisation/g, 'informatique');
 }
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
@@ -161,43 +161,52 @@ document.getElementById('ocr-input').addEventListener('change', async (e) => {
 
   const lignes = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   const notesTrouvees = {};
+  const logDetails = [];
 
   for (let i = 0; i < lignes.length; i++) {
     const ligne = nettoyerTexte(lignes[i]);
-    
-    // Recherche du nom de matière
+
     for (const matiere in mapChamps) {
       if (ligne.includes(matiere)) {
-        // Cherche une note sur la même ligne ou la suivante
         let noteStr = lignes[i].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
         if (!noteStr && lignes[i+1]) noteStr = lignes[i+1].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
+
         if (noteStr) {
           const note = parseFloat(noteStr[1].replace(',', '.'));
           if (note >= 0 && note <= 20) {
             notesTrouvees[mapChamps[matiere]] = note;
+            logDetails.push(`✅ ${matiere} → ${note}`);
+          } else {
+            logDetails.push(`⚠️ ${matiere} détectée mais note invalide : ${noteStr[1]}`);
           }
+        } else {
+          logDetails.push(`⚠️ ${matiere} détectée mais aucune note trouvée`);
         }
       }
     }
   }
 
-  if (Object.keys(notesTrouvees).length !== 13) {
-    document.getElementById('ocr-status').textContent =
-      `❌ Seulement ${Object.keys(notesTrouvees).length}/13 notes détectées. Vérifie l'image.`;
-    return;
-  }
+  const matieresTrouvees = Object.values(mapChamps).filter(champ => champ in notesTrouvees);
+  const matieresManquantes = Object.entries(mapChamps)
+    .filter(([_, champ]) => !(champ in notesTrouvees))
+    .map(([nom]) => nom);
 
-  // Remplissage des champs du formulaire
+  // Affichage des notes
+  const resultText = `
+🧾 ${matieresTrouvees.length}/13 notes détectées :
+${logDetails.join('\n')}
+
+${matieresManquantes.length > 0 ? `❌ Matières manquantes :\n- ${matieresManquantes.join('\n- ')}` : ''}
+`.trim();
+
+  document.getElementById('ocr-status').textContent = resultText;
+
+  // Remplir les champs reconnus
   for (const champ in notesTrouvees) {
     const champInput = document.querySelector(`[name="${champ}"]`);
     if (champInput) champInput.value = notesTrouvees[champ];
   }
-
-  document.getElementById('ocr-status').textContent = "✅ 13 notes détectées et champs remplis.";
 });
-</script>
-
-
 </script>
 </body>
 </html>
