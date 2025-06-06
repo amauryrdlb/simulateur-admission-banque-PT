@@ -19,7 +19,7 @@
       padding: 20px;
       text-align: center;
     }
-    h1, h2 {
+    h1, h2, h3 {
       margin: 0 0 10px;
     }
     .container {
@@ -76,6 +76,14 @@
     footer a:hover {
       text-decoration: underline;
     }
+    .ocr-section {
+      max-width: 800px;
+      margin: 30px auto;
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -83,16 +91,17 @@
     <h1>🎓 Simulateur Banque PT</h1>
     <p>Évalue tes chances aux concours Arts & Métiers et CentraleSupélec</p>
   </header>
-<div class="ocr-section">
-  <h3>Importer mes résultats (image)</h3>
-  <input type="file" id="ocr-input" accept="image/*" />
-  <br><br>
-  <img id="preview-image" src="" alt="Aperçu" style="max-width: 300px; display:none;" />
-  <p id="ocr-status"></p>
-</div>
 
+  <!-- OCR SECTION -->
+  <div class="ocr-section">
+    <h3>📸 Importer mes résultats (image)</h3>
+    <input type="file" id="ocr-input" accept="image/*" />
+    <br><br>
+    <img id="preview-image" src="" alt="Aperçu" style="max-width: 300px; display:none;" />
+    <p id="ocr-status"></p>
+  </div>
 
-
+  <!-- FORMULAIRE DE NOTES -->
   <div class="container">
     <form id="notesForm">
       <h2>Notes écrites</h2>
@@ -109,10 +118,8 @@
       <label>Angalais B :</label><input type="number" name="sic" min="0" max="20" step="0.01">
       <label>Francais A :</label><input type="number" name="tipe" min="0" max="20" step="0.01">
       <label>Francais B:</label><input type="number" name="entretien" min="0" max="20" step="0.01">
-
       <button type="submit">Calculer mes chances</button>
     </form>
-
     <div class="result" id="result"></div>
   </div>
 
@@ -124,6 +131,73 @@
     </p>
   </footer>
 
+  <!-- SCRIPT OCR -->
+  <script>
+    document.getElementById('ocr-input').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function () {
+        const img = document.getElementById('preview-image');
+        img.src = reader.result;
+        img.style.display = 'block';
+
+        document.getElementById('ocr-status').innerText = "📖 Lecture de l'image en cours...";
+
+        Tesseract.recognize(
+          reader.result,
+          'fra',
+          {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                document.getElementById('ocr-status').innerText = `Progression : ${Math.round(m.progress * 100)}%`;
+              }
+            }
+          }
+        ).then(({ data: { text } }) => {
+          document.getElementById('ocr-status').innerText = "✅ Texte détecté.";
+          remplirChamps(text);
+        });
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    function remplirChamps(text) {
+      const correspondance = {
+        "maths a": "maths1",
+        "maths b": "maths2",
+        "maths c": "physique1",
+        "physique a": "physique2",
+        "physique b": "francais",
+        "sciences industrielles a": "anglais",
+        "sciences industrielles b": "si1",
+        "sciences industrielles c": "si2",
+        "informatique": "info",
+        "angalais a": "model",
+        "angalais b": "sic",
+        "francais a": "tipe",
+        "francais b": "entretien"
+      };
+
+      const lignes = text.toLowerCase().split('\n');
+      lignes.forEach(ligne => {
+        for (let cle in correspondance) {
+          if (ligne.includes(cle)) {
+            const note = ligne.match(/(\d{1,2}([.,]\d+)?)/);
+            if (note) {
+              const valeur = parseFloat(note[1].replace(',', '.'));
+              document.querySelector(`input[name="${correspondance[cle]}"]`).value = valeur;
+            }
+          }
+        }
+      });
+    }
+  </script>
+
+  <!-- SCRIPT DE CALCUL (inchangé) -->
   <script>
     document.getElementById('notesForm').addEventListener('submit', function(event) {
       event.preventDefault();
@@ -131,17 +205,16 @@
       const notes = Object.fromEntries(new FormData(event.target).entries());
       Object.keys(notes).forEach(k => notes[k] = parseFloat(notes[k] || 0));
 
-      // Coefficients fictifs à adapter précisément
       const coeffs = {
         arts: {
           mathsA: 0, mathsB: 4, mathsC: 4, physiqueA: 4,
-         physiqueB: 4, si1: 3, si2: 4, si3: 4,
+          physiqueB: 4, si1: 3, si2: 4, si3: 4,
           info: 4, anga: 0, angb: 4, fra: 5, frb: 5,
           totalOral: 40
         },
         centrale: {
           mathsA: 8, mathsB: 8, mathsC: 8, physiqueA: 8,
-         physiqueB: 8, si1: 16, si2: 6, si3: 0,
+          physiqueB: 8, si1: 16, si2: 6, si3: 0,
           info: 10, anga: 11, angb: 0, fra: 0, frb: 17,
           totalOral: 100
         }
