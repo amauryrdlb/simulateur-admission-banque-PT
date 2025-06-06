@@ -86,19 +86,19 @@
   <div class="container">
     <form id="notesForm">
       <h2>Notes écrites</h2>
-      <label>Maths 1 :</label><input type="number" name="maths1" min="0" max="20" step="0.01">
-      <label>Maths 2 :</label><input type="number" name="maths2" min="0" max="20" step="0.01">
-      <label>Physique 1 :</label><input type="number" name="physique1" min="0" max="20" step="0.01">
-      <label>Physique 2 :</label><input type="number" name="physique2" min="0" max="20" step="0.01">
-      <label>Français :</label><input type="number" name="francais" min="0" max="20" step="0.01">
-      <label>Anglais :</label><input type="number" name="anglais" min="0" max="20" step="0.01">
-      <label>Sciences Industrielles 1 :</label><input type="number" name="si1" min="0" max="20" step="0.01">
-      <label>Sciences Industrielles 2 :</label><input type="number" name="si2" min="0" max="20" step="0.01">
+      <label>Maths A :</label><input type="number" name="maths1" min="0" max="20" step="0.01">
+      <label>Maths B :</label><input type="number" name="maths2" min="0" max="20" step="0.01">
+      <label>Maths C :</label><input type="number" name="physique1" min="0" max="20" step="0.01">
+      <label>Physique A :</label><input type="number" name="physique2" min="0" max="20" step="0.01">
+      <label>Physique B:</label><input type="number" name="francais" min="0" max="20" step="0.01">
+      <label>Sciences Industrielles A :</label><input type="number" name="anglais" min="0" max="20" step="0.01">
+      <label>Sciences Industrielles B :</label><input type="number" name="si1" min="0" max="20" step="0.01">
+      <label>Sciences Industrielles C :</label><input type="number" name="si2" min="0" max="20" step="0.01">
       <label>Informatique :</label><input type="number" name="info" min="0" max="20" step="0.01">
-      <label>Modélisation :</label><input type="number" name="model" min="0" max="20" step="0.01">
-      <label>Sciences de l'ingénieur (SI C) :</label><input type="number" name="sic" min="0" max="20" step="0.01">
-      <label>TIPE :</label><input type="number" name="tipe" min="0" max="20" step="0.01">
-      <label>Entretien :</label><input type="number" name="entretien" min="0" max="20" step="0.01">
+      <label>Angalais A :</label><input type="number" name="model" min="0" max="20" step="0.01">
+      <label>Angalais B :</label><input type="number" name="sic" min="0" max="20" step="0.01">
+      <label>Francais A :</label><input type="number" name="tipe" min="0" max="20" step="0.01">
+      <label>Francais B:</label><input type="number" name="entretien" min="0" max="20" step="0.01">
 
       <button type="submit">Calculer mes chances</button>
     </form>
@@ -124,16 +124,16 @@
       // Coefficients fictifs à adapter précisément
       const coeffs = {
         arts: {
-          maths1: 3, maths2: 3, physique1: 2, physique2: 2,
-          francais: 2, anglais: 2, si1: 2, si2: 2,
-          info: 1, model: 1, sic: 1, tipe: 2, entretien: 1,
-          totalOral: 20
+          mathsA: 0, mathsB: 4, mathsC: 4, physiqueA: 4,
+         physiqueB: 4, si1: 3, si2: 4, si3: 4,
+          info: 4, anga: 0, angb: 4, fra: 5, frb: 5,
+          totalOral: 40
         },
         centrale: {
-          maths1: 3, maths2: 3, physique1: 2, physique2: 2,
-          francais: 1, anglais: 1, si1: 2, si2: 2,
-          info: 1, model: 1, sic: 1, tipe: 2, entretien: 1,
-          totalOral: 19
+          mathsA: 8, mathsB: 8, mathsC: 8, physiqueA: 8,
+         physiqueB: 8, si1: 16, si2: 6, si3: 0,
+          info: 10, anga: 11, angb: 0, fra: 0, frb: 17,
+          totalOral: 100
         }
       };
 
