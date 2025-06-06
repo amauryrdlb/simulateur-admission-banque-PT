@@ -119,21 +119,36 @@
 
 <script>
 const mapChamps = {
-  "mathématiques a": "mathsA", "mathématiques b": "mathsB", "mathématiques c": "mathsC",
-  "physique a": "physiqueA", "physique b": "physiqueB",
-  "sciences industrielles a": "siA", "sciences industrielles b": "siB", "sciences industrielles c": "siC",
+  "mathématiques a": "mathsA",
+  "mathématiques b": "mathsB",
+  "mathématiques c": "mathsC",
+  "physique a": "physiqueA",
+  "physique b": "physiqueB",
+  "sciences industrielles a": "siA",
+  "sciences industrielles b": "siB",
+  "sciences industrielles c": "siC",
   "informatique": "info",
-  "anglais a": "anglaisA", "anglais b": "anglaisB",
-  "français a": "francaisA", "français b": "francaisB"
+  "anglais a": "anglaisA",
+  "anglais b": "anglaisB",
+  "français a": "francaisA",
+  "français b": "francaisB"
 };
 
-function normaliserTexte(t) {
-  return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function nettoyerTexte(txt) {
+  return txt
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // retire les accents
+    .toLowerCase().trim()
+    .replace(/\s+/g, ' ') // normalise les espaces
+    .replace(/frangais/g, 'français') // correction OCR fréquente
+    .replace(/langue vivante a anglais/g, 'anglais a')
+    .replace(/langue vivante b anglais/g, 'anglais b')
+    .replace(/modélisation|modelisation/g, 'informatique');
 }
 
 document.getElementById('ocr-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+
   document.getElementById('ocr-status').textContent = "Lecture en cours...";
 
   const img = document.getElementById('preview-image');
@@ -144,43 +159,43 @@ document.getElementById('ocr-input').addEventListener('change', async (e) => {
     logger: m => console.log(m)
   });
 
-  document.getElementById('ocr-status').textContent = "Texte extrait.";
   const lignes = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const notesTrouvees = {};
 
-  const notes = [];
   for (let i = 0; i < lignes.length; i++) {
-    const noteMatch = lignes[i].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
-    if (noteMatch) {
-      const note = parseFloat(noteMatch[1].replace(',', '.'));
-      if (note >= 0 && note <= 20) {
-        // chercher matière juste avant (ou sur la même ligne)
-        let matiere = lignes[i - 1] || lignes[i];
-        matiere = normaliserTexte(matiere);
-        // nettoyer certaines variations OCR
-        matiere = matiere
-          .replace("frangais", "français")
-          .replace("langue vivante a anglais", "anglais a")
-          .replace("langue vivante b anglais", "anglais b")
-          .replace("modélisation", "informatique");
-
-        if (mapChamps[matiere]) {
-          notes.push({ champ: mapChamps[matiere], valeur: note });
+    const ligne = nettoyerTexte(lignes[i]);
+    
+    // Recherche du nom de matière
+    for (const matiere in mapChamps) {
+      if (ligne.includes(matiere)) {
+        // Cherche une note sur la même ligne ou la suivante
+        let noteStr = lignes[i].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
+        if (!noteStr && lignes[i+1]) noteStr = lignes[i+1].match(/(\d{1,2}(?:[.,]\d{1,2})?)/);
+        if (noteStr) {
+          const note = parseFloat(noteStr[1].replace(',', '.'));
+          if (note >= 0 && note <= 20) {
+            notesTrouvees[mapChamps[matiere]] = note;
+          }
         }
       }
     }
   }
 
-  if (notes.length !== 13) {
-    document.getElementById('ocr-status').textContent = `Erreur : ${notes.length} notes valides détectées. Attendu : 13.`;
+  if (Object.keys(notesTrouvees).length !== 13) {
+    document.getElementById('ocr-status').textContent =
+      `❌ Seulement ${Object.keys(notesTrouvees).length}/13 notes détectées. Vérifie l'image.`;
     return;
   }
 
-  notes.forEach(({ champ, valeur }) => {
-    document.querySelector(`[name="${champ}"]`).value = valeur;
-  });
+  // Remplissage des champs du formulaire
+  for (const champ in notesTrouvees) {
+    const champInput = document.querySelector(`[name="${champ}"]`);
+    if (champInput) champInput.value = notesTrouvees[champ];
+  }
 
-  document.getElementById('ocr-status').textContent = "Champs préremplis avec succès ✅";
+  document.getElementById('ocr-status').textContent = "✅ 13 notes détectées et champs remplis.";
 });
+</script>
 
 
 </script>
